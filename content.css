@@ -1,0 +1,34 @@
+.screenshot-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100vw;
+  height: 100vh;
+  background: rgba(0, 0, 0, 0.3);
+  cursor: crosshair;
+  z-index: 2147483647;
+  user-select: none;
+}
+
+.screenshot-selection {
+  position: absolute;
+  border: 2px dashed #00d4ff;
+  background: rgba(0, 212, 255, 0.08);
+  box-shadow: 0 0 0 9999px rgba(0, 0, 0, 0.4);
+  pointer-events: none;
+}
+
+.screenshot-dimensions {
+  position: absolute;
+  bottom: -28px;
+  left: 50%;
+  transform: translateX(-50%);
+  background: rgba(0, 0, 0, 0.8);
+  color: #ffffff;
+  font-size: 12px;
+  font-family: monospace;
+  padding: 3px 8px;
+  border-radius: 4px;
+  white-space: nowrap;
+  pointer-events: none;
+}

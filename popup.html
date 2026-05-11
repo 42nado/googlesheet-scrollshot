@@ -1,0 +1,146 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Sheets Screenshot</title>
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    body {
+      width: 320px;
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+      background: #1a1a2e;
+      color: #e0e0e0;
+      padding: 16px;
+    }
+
+    h1 {
+      font-size: 16px;
+      font-weight: 600;
+      text-align: center;
+      margin-bottom: 14px;
+      color: #ffffff;
+      letter-spacing: 0.5px;
+    }
+
+    .btn-list {
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+    }
+
+    .btn {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      padding: 12px 14px;
+      border: none;
+      border-radius: 10px;
+      cursor: pointer;
+      transition: transform 0.1s, box-shadow 0.2s;
+      text-align: left;
+    }
+
+    .btn:hover {
+      transform: translateY(-1px);
+      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+    }
+
+    .btn:active {
+      transform: translateY(0);
+    }
+
+    .btn-icon {
+      font-size: 24px;
+      flex-shrink: 0;
+      width: 36px;
+      text-align: center;
+    }
+
+    .btn-text {
+      display: flex;
+      flex-direction: column;
+      gap: 2px;
+    }
+
+    .btn-title {
+      font-size: 13px;
+      font-weight: 600;
+      color: #ffffff;
+    }
+
+    .btn-desc {
+      font-size: 11px;
+      opacity: 0.8;
+      color: #c0c0c0;
+    }
+
+    .btn-screenshot {
+      background: linear-gradient(135deg, #667eea, #764ba2);
+    }
+
+    .btn-area {
+      background: linear-gradient(135deg, #f093fb, #f5576c);
+    }
+
+    .btn-scroll {
+      background: linear-gradient(135deg, #4facfe, #00f2fe);
+    }
+
+    .btn-selection {
+      background: linear-gradient(135deg, #43e97b, #38f9d7);
+    }
+
+    .btn-scroll .btn-title,
+    .btn-scroll .btn-desc,
+    .btn-selection .btn-title,
+    .btn-selection .btn-desc {
+      color: #1a1a2e;
+    }
+
+    .btn-scroll .btn-desc,
+    .btn-selection .btn-desc {
+      opacity: 0.7;
+    }
+  </style>
+</head>
+<body>
+  <h1>📸 Sheets Screenshot</h1>
+  <div class="btn-list">
+    <button class="btn btn-screenshot" id="btn-screenshot">
+      <span class="btn-icon">🖥️</span>
+      <span class="btn-text">
+        <span class="btn-title">Screenshot</span>
+        <span class="btn-desc">Capture the visible area</span>
+      </span>
+    </button>
+    <button class="btn btn-area" id="btn-area">
+      <span class="btn-icon">✂️</span>
+      <span class="btn-text">
+        <span class="btn-title">Area Screenshot</span>
+        <span class="btn-desc">Select an area to capture</span>
+      </span>
+    </button>
+    <button class="btn btn-scroll" id="btn-scroll">
+      <span class="btn-icon">📜</span>
+      <span class="btn-text">
+        <span class="btn-title">Scroll Capture</span>
+        <span class="btn-desc">Capture full page by scrolling</span>
+      </span>
+    </button>
+    <button class="btn btn-selection" id="btn-selection">
+      <span class="btn-icon">📊</span>
+      <span class="btn-text">
+        <span class="btn-title">Capture Selection</span>
+        <span class="btn-desc">Capture selected cell range</span>
+      </span>
+    </button>
+  </div>
+  <script src="popup.js"></script>
+</body>
+</html>

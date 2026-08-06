@@ -56,10 +56,7 @@
     }
 
     .btn-icon {
-      font-size: 24px;
-      flex-shrink: 0;
-      width: 36px;
-      text-align: center;
+      display: none;
     }
 
     .btn-text {
@@ -110,31 +107,27 @@
   </style>
 </head>
 <body>
-  <h1>📸 Sheets Screenshot</h1>
+  <h1>Sheets Screenshot</h1>
   <div class="btn-list">
     <button class="btn btn-screenshot" id="btn-screenshot">
-      <span class="btn-icon">🖥️</span>
       <span class="btn-text">
         <span class="btn-title">Screenshot</span>
         <span class="btn-desc">Capture the visible area</span>
       </span>
     </button>
     <button class="btn btn-area" id="btn-area">
-      <span class="btn-icon">✂️</span>
       <span class="btn-text">
         <span class="btn-title">Area Screenshot</span>
         <span class="btn-desc">Select an area to capture</span>
       </span>
     </button>
     <button class="btn btn-scroll" id="btn-scroll">
-      <span class="btn-icon">📜</span>
       <span class="btn-text">
         <span class="btn-title">Scroll Capture</span>
         <span class="btn-desc">Capture full page by scrolling</span>
       </span>
     </button>
     <button class="btn btn-selection" id="btn-selection">
-      <span class="btn-icon">📊</span>
       <span class="btn-text">
         <span class="btn-title">Capture Selection</span>
         <span class="btn-desc">Capture selected cell range</span>

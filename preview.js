@@ -1,3 +1,5 @@
+const api = typeof browser !== 'undefined' ? browser : chrome;
+
 document.addEventListener('DOMContentLoaded', () => {
   const img = document.getElementById('preview-image');
   const filenameEl = document.getElementById('filename');
@@ -20,14 +22,15 @@ document.addEventListener('DOMContentLoaded', () => {
   let scrollLeftStart = 0;
   let scrollTopStart = 0;
 
-  // Load preview data
-  chrome.storage.local.get('previewData', (result) => {
+  // Load preview data — promise form works on both `browser.*` (Firefox,
+  // which has no callback overload) and `chrome.*` (MV3).
+  api.storage.local.get('previewData').then((result) => {
     if (result.previewData) {
       dataUrl = result.previewData.dataUrl;
       filename = result.previewData.filename || 'capture.png';
       img.src = dataUrl;
       filenameEl.textContent = filename;
-      chrome.storage.local.remove('previewData');
+      api.storage.local.remove('previewData');
     }
   });
 
@@ -56,7 +59,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
   // Download
   downloadBtn.addEventListener('click', () => {
-    chrome.runtime.sendMessage({ action: 'download', dataUrl, filename });
+    api.runtime.sendMessage({ action: 'download', dataUrl, filename });
   });
 
   // Zoom functions

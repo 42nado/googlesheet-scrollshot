@@ -1,11 +1,16 @@
 // Content script for Google Sheets Screenshot Extension
 // Handles 4 capture modes: screenshot, area, tall (scroll), selection
 
+// `var`, not `const` — this script can be re-injected into the same page
+// (popup.js's fallback executeScript path), and a top-level `const` throws
+// "already declared" on re-injection while `var`/`function` do not.
+var api = typeof browser !== 'undefined' ? browser : chrome;
+
 // Prevent multiple injections from re-registering listeners
 if (!window.__sheetsScreenshotLoaded) {
   window.__sheetsScreenshotLoaded = true;
 
-  chrome.runtime.onMessage.addListener((msg, sender, sendResponse) => {
+  api.runtime.onMessage.addListener((msg, sender, sendResponse) => {
     if (msg.action === 'screenshot') startScreenshot();
     if (msg.action === 'area') startAreaCapture();
     if (msg.action === 'tall') startTallCapture();
@@ -16,6 +21,14 @@ if (!window.__sheetsScreenshotLoaded) {
 // ===== Helper Functions =====
 
 function sleep(ms) { return new Promise(r => setTimeout(r, ms)); }
+
+// Firefox's `browser.*` namespace is promise-only (no callback param), so
+// this must be awaited rather than passed a callback + checked via lastError.
+async function captureVisible() {
+  const resp = await api.runtime.sendMessage({ action: 'capture-visible' });
+  if (resp && resp.dataUrl) return resp.dataUrl;
+  throw new Error((resp && resp.error) || 'No capture data');
+}
 
 function imageDataToCanvas(imageData) {
   const c = document.createElement('canvas');
@@ -29,14 +42,8 @@ function imageDataToCanvas(imageData) {
 
 async function startScreenshot() {
   try {
-    const dataUrl = await new Promise((resolve, reject) => {
-      chrome.runtime.sendMessage({ action: 'capture-visible' }, (resp) => {
-        if (chrome.runtime.lastError) reject(new Error(chrome.runtime.lastError.message));
-        else if (resp && resp.dataUrl) resolve(resp.dataUrl);
-        else reject(new Error('No capture data'));
-      });
-    });
-    chrome.runtime.sendMessage({
+    const dataUrl = await captureVisible();
+    api.runtime.sendMessage({
       action: 'preview',
       dataUrl: dataUrl,
       filename: 'screenshot-' + Date.now() + '.png'
@@ -107,18 +114,12 @@ async function startAreaCapture() {
       const rect = { x, y, width: w, height: h };
 
       try {
-        const dataUrl = await new Promise((resolve, reject) => {
-          chrome.runtime.sendMessage({ action: 'capture-visible' }, (resp) => {
-            if (chrome.runtime.lastError) reject(new Error(chrome.runtime.lastError.message));
-            else if (resp && resp.dataUrl) resolve(resp.dataUrl);
-            else reject(new Error('No capture data'));
-          });
-        });
+        const dataUrl = await captureVisible();
 
         const cropped = await cropToImageData(dataUrl, rect, dpr);
         const canvas = imageDataToCanvas(cropped);
         const finalDataUrl = canvas.toDataURL('image/png');
-        chrome.runtime.sendMessage({
+        api.runtime.sendMessage({
           action: 'preview',
           dataUrl: finalDataUrl,
           filename: 'area-' + Date.now() + '.png'
@@ -184,13 +185,7 @@ async function startTallCapture() {
         await sleep(frame === 0 ? 550 : 700);
 
         // Capture
-        const dataUrl = await new Promise((resolve, reject) => {
-          chrome.runtime.sendMessage({ action: 'capture-visible' }, (resp) => {
-            if (chrome.runtime.lastError) reject(new Error(chrome.runtime.lastError.message));
-            else if (resp && resp.dataUrl) resolve(resp.dataUrl);
-            else reject(new Error('No capture data'));
-          });
-        });
+        const dataUrl = await captureVisible();
 
         // Crop to grid area
         const cropped = await cropToImageData(dataUrl, gridRect, dpr);
@@ -290,7 +285,7 @@ async function startTallCapture() {
     // Convert to dataUrl and send to preview
     const finalCanvas = imageDataToCanvas(stitched);
     const finalDataUrl = finalCanvas.toDataURL('image/png');
-    chrome.runtime.sendMessage({
+    api.runtime.sendMessage({
       action: 'preview',
       dataUrl: finalDataUrl,
       filename: 'scroll-capture-' + Date.now() + '.png'
@@ -329,20 +324,14 @@ async function startSelectionCapture() {
     if (totalRows <= 3) {
       // Simple capture — just screenshot and crop to selection bounds
       await sleep(300);
-      const dataUrl = await new Promise((resolve, reject) => {
-        chrome.runtime.sendMessage({ action: 'capture-visible' }, (resp) => {
-          if (chrome.runtime.lastError) reject(new Error(chrome.runtime.lastError.message));
-          else if (resp && resp.dataUrl) resolve(resp.dataUrl);
-          else reject(new Error('No capture data'));
-        });
-      });
+      const dataUrl = await captureVisible();
 
       const selRect = getSelectionBoundingRect();
       const cropRect = selRect || gridRect;
       const cropped = await cropToImageData(dataUrl, cropRect, dpr);
       const canvas = imageDataToCanvas(cropped);
       const finalDataUrl = canvas.toDataURL('image/png');
-      chrome.runtime.sendMessage({
+      api.runtime.sendMessage({
         action: 'preview',
         dataUrl: finalDataUrl,
         filename: 'selection-' + Date.now() + '.png'
@@ -382,13 +371,7 @@ async function startSelectionCapture() {
         console.log('[Selection capture] Frame', frame, '- capturing...');
         await sleep(frame === 0 ? 550 : 700);
 
-        const dataUrl = await new Promise((resolve, reject) => {
-          chrome.runtime.sendMessage({ action: 'capture-visible' }, (resp) => {
-            if (chrome.runtime.lastError) reject(new Error(chrome.runtime.lastError.message));
-            else if (resp && resp.dataUrl) resolve(resp.dataUrl);
-            else reject(new Error('No capture data'));
-          });
-        });
+        const dataUrl = await captureVisible();
 
         const curGridRect = findGridCanvasRect();
         const cropped = await cropToImageData(dataUrl, curGridRect || gridRect, dpr);
@@ -482,7 +465,7 @@ async function startSelectionCapture() {
 
     const finalCanvas = imageDataToCanvas(stitched);
     const finalDataUrl = finalCanvas.toDataURL('image/png');
-    chrome.runtime.sendMessage({
+    api.runtime.sendMessage({
       action: 'preview',
       dataUrl: finalDataUrl,
       filename: 'selection-' + Date.now() + '.png'
@@ -825,15 +808,19 @@ function hasScrolledPastSelection(range, scrollMeasure, initialScrollTop, gridRe
   if (scrollMeasure && gridRect && range) {
     const totalRows = range.endRow - range.startRow + 1;
     const scrolled = scrollMeasure.scrollTop - (initialScrollTop || 0);
-    // Estimate visible rows: grid height / estimated row height
-    // Use conservative row height of 21px (default Google Sheets row height)
-    const estRowHeight = 21;
-    const visibleRows = Math.floor(gridRect.height / estRowHeight);
-    // Total pixels needed: (totalRows - visibleRows) * estRowHeight
-    // We subtract visibleRows because the first frame captures those without scrolling
-    const estScrollNeeded = Math.max(0, (totalRows - visibleRows) * estRowHeight);
     
-    if (scrolled >= estScrollNeeded) {
+    // Estimate row height from the scrollbar's total range
+    // scrollHeight represents the full document, clientHeight is the visible area
+    // Use a generous row height estimate to avoid stopping too early
+    const totalScrollableRows = Math.max(totalRows, Math.round(scrollMeasure.scrollHeight / 21));
+    const estRowHeight = scrollMeasure.scrollHeight / Math.max(totalScrollableRows, 1);
+    
+    const visibleRows = Math.floor(gridRect.height / estRowHeight);
+    // Total scroll needed: selection rows minus visible rows, times row height
+    // Add 50% buffer to avoid stopping too early
+    const estScrollNeeded = Math.max(0, (totalRows - visibleRows) * estRowHeight * 1.5);
+    
+    if (estScrollNeeded > 0 && scrolled >= estScrollNeeded) {
       console.log('[Selection capture] Scroll distance estimate reached:', scrolled, '>=', estScrollNeeded, '(rows:', totalRows, ')');
       return true;
     }

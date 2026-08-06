@@ -1,0 +1,188 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Generate Extension Icons</title>
+  <style>
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+      background: #1a1a2e;
+      color: #e0e0e0;
+      padding: 40px;
+      text-align: center;
+    }
+    h1 { margin-bottom: 20px; }
+    .preview { margin: 20px 0; }
+    .preview canvas {
+      margin: 10px;
+      border: 1px solid #333;
+    }
+    a {
+      display: inline-block;
+      margin: 8px 12px;
+      padding: 10px 20px;
+      background: linear-gradient(135deg, #667eea, #764ba2);
+      color: #fff;
+      text-decoration: none;
+      border-radius: 8px;
+      font-weight: 600;
+    }
+    a:hover { opacity: 0.9; }
+    .instructions {
+      margin-top: 30px;
+      padding: 16px;
+      background: #16213e;
+      border-radius: 8px;
+      text-align: left;
+      max-width: 500px;
+      margin-left: auto;
+      margin-right: auto;
+    }
+    .instructions p { margin: 8px 0; }
+  </style>
+</head>
+<body>
+  <h1>Sheets Screenshot - Icon Generator</h1>
+  <p>Click each link below to download the icon, then save it to the <code>icons/</code> folder.</p>
+  <div class="preview" id="preview"></div>
+  <div id="links"></div>
+
+  <div class="instructions">
+    <p><strong>Instructions:</strong></p>
+    <p>1. Click each download link below</p>
+    <p>2. Save the files to the <code>icons/</code> folder in the extension directory</p>
+    <p>3. Reload the extension in <code>chrome://extensions</code></p>
+  </div>
+
+<script>
+function generateIcon(size) {
+  const canvas = document.createElement('canvas');
+  canvas.width = size;
+  canvas.height = size;
+  const ctx = canvas.getContext('2d');
+  const s = size;
+
+  // Background: rounded rectangle with gradient
+  const grad = ctx.createLinearGradient(0, 0, s, s);
+  grad.addColorStop(0, '#667eea');
+  grad.addColorStop(1, '#764ba2');
+  ctx.fillStyle = grad;
+
+  const r = s * 0.18;
+  ctx.beginPath();
+  ctx.moveTo(r, 0);
+  ctx.lineTo(s - r, 0);
+  ctx.quadraticCurveTo(s, 0, s, r);
+  ctx.lineTo(s, s - r);
+  ctx.quadraticCurveTo(s, s, s - r, s);
+  ctx.lineTo(r, s);
+  ctx.quadraticCurveTo(0, s, 0, s - r);
+  ctx.lineTo(0, r);
+  ctx.quadraticCurveTo(0, 0, r, 0);
+  ctx.fill();
+
+  // Subtle inner shadow
+  ctx.fillStyle = 'rgba(0,0,0,0.1)';
+  ctx.fillRect(0, s * 0.7, s, s * 0.3);
+
+  // Camera body (white, rounded rect)
+  ctx.strokeStyle = '#ffffff';
+  ctx.fillStyle = 'rgba(255,255,255,0.15)';
+  ctx.lineWidth = Math.max(1, s * 0.05);
+  ctx.lineCap = 'round';
+  ctx.lineJoin = 'round';
+
+  const bx = s * 0.2;
+  const by = s * 0.38;
+  const bw = s * 0.6;
+  const bh = s * 0.38;
+  const br = s * 0.06;
+
+  ctx.beginPath();
+  ctx.moveTo(bx + br, by);
+  ctx.lineTo(bx + bw - br, by);
+  ctx.quadraticCurveTo(bx + bw, by, bx + bw, by + br);
+  ctx.lineTo(bx + bw, by + bh - br);
+  ctx.quadraticCurveTo(bx + bw, by + bh, bx + bw - br, by + bh);
+  ctx.lineTo(bx + br, by + bh);
+  ctx.quadraticCurveTo(bx, by + bh, bx, by + bh - br);
+  ctx.lineTo(bx, by + br);
+  ctx.quadraticCurveTo(bx, by, bx + br, by);
+  ctx.closePath();
+  ctx.fill();
+  ctx.stroke();
+
+  // Camera top bump (viewfinder)
+  ctx.beginPath();
+  ctx.moveTo(s * 0.35, by);
+  ctx.lineTo(s * 0.38, s * 0.27);
+  ctx.lineTo(s * 0.62, s * 0.27);
+  ctx.lineTo(s * 0.65, by);
+  ctx.stroke();
+
+  // Camera lens (circle)
+  ctx.beginPath();
+  ctx.arc(s * 0.5, by + bh * 0.5, s * 0.11, 0, Math.PI * 2);
+  ctx.stroke();
+
+  // Lens inner dot
+  ctx.beginPath();
+  ctx.arc(s * 0.5, by + bh * 0.5, s * 0.04, 0, Math.PI * 2);
+  ctx.fillStyle = '#ffffff';
+  ctx.fill();
+
+  // Flash dot (top-right of camera body)
+  ctx.beginPath();
+  ctx.arc(s * 0.72, s * 0.32, s * 0.025, 0, Math.PI * 2);
+  ctx.fillStyle = '#ffffff';
+  ctx.fill();
+
+  // Small grid lines at bottom (represents spreadsheet)
+  ctx.strokeStyle = 'rgba(255,255,255,0.5)';
+  ctx.lineWidth = Math.max(0.5, s * 0.02);
+  const gy = s * 0.82;
+  // Horizontal line
+  ctx.beginPath();
+  ctx.moveTo(s * 0.25, gy);
+  ctx.lineTo(s * 0.75, gy);
+  ctx.stroke();
+  // Vertical lines
+  ctx.beginPath();
+  ctx.moveTo(s * 0.42, s * 0.78);
+  ctx.lineTo(s * 0.42, s * 0.86);
+  ctx.stroke();
+  ctx.beginPath();
+  ctx.moveTo(s * 0.58, s * 0.78);
+  ctx.lineTo(s * 0.58, s * 0.86);
+  ctx.stroke();
+
+  return canvas;
+}
+
+const sizes = [16, 48, 128];
+const previewDiv = document.getElementById('preview');
+const linksDiv = document.getElementById('links');
+
+sizes.forEach(size => {
+  const canvas = generateIcon(size);
+  
+  // Show preview (scaled up for small icons)
+  const previewCanvas = document.createElement('canvas');
+  const displaySize = Math.max(size, 64);
+  previewCanvas.width = displaySize;
+  previewCanvas.height = displaySize;
+  const pCtx = previewCanvas.getContext('2d');
+  pCtx.imageSmoothingEnabled = false;
+  pCtx.drawImage(canvas, 0, 0, displaySize, displaySize);
+  previewDiv.appendChild(previewCanvas);
+
+  // Create download link
+  const dataUrl = canvas.toDataURL('image/png');
+  const a = document.createElement('a');
+  a.href = dataUrl;
+  a.download = 'icon' + size + '.png';
+  a.textContent = 'Download icon' + size + '.png';
+  linksDiv.appendChild(a);
+});
+</script>
+</body>
+</html>
